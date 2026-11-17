@@ -28,6 +28,24 @@ First start prints a one-time `admin` password. Put it behind your corporate HTT
 | Roles (admin / editor / viewer), per-report grants for viewers | Done |
 | Not built yet | Letter/mail-merge engine, in-app Excel/Word/PDF viewers, report bursting, cascading parameters, Active Directory/LDAP login, SharePoint delivery, PDF export of SQL reports |
 
+## Importing existing reports
+
+```bash
+python -m rtag.importer "\\fileserver\Reports" --connection main --dry-run   # preview
+python -m rtag.importer "\\fileserver\Reports" --connection main
+```
+
+`.rpt` files become Crystal reports, `.sql` files become SQL reports, and the sub-folder becomes the category.
+An optional `--manifest` CSV (`path,name,category,description,params,connection`) sets names, descriptions and
+parameters. Re-running is safe: unchanged files are skipped and changed files become a new version. Schedules,
+users and run history are **not** imported. Their source format is unknown.
+
+## Upgrades
+
+Code and data are separate. Everything you'd lose lives in `RTAG_DATA_DIR` (database, `.rpt` versions, outputs).
+An upgrade means stopping the service, replacing the code, and starting it again. **Back up `RTAG_DATA_DIR` first.**
+Caveat: there are no schema migrations yet. A future version that changes the database layout would need one.
+
 ## Configuration (environment variables)
 
 `RTAG_DATA_DIR`, `RTAG_DB_URL`, `RTAG_SECRET`, `RTAG_DELIVERY_ROOT` (network folder jobs may write under),
