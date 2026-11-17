@@ -1,0 +1,2 @@
+{% extends "base.html" %}{% block body %}
+<h1>Run failed</h1><p class="err">{{ run.message }}</p><a href="/reports/{{ r.id }}">Back to {{ r.name }}</a>{% endblock %}

@@ -1,0 +1,6 @@
+{% extends "base.html" %}{% block body %}
+<h1>{{ r.name }}: v{{ a.number }} → v{{ b.number }}</h1>
+{% if file_changed %}<p>The attached file differs ({{ a.filename }} {{ a.sha256[:10] }} → {{ b.filename }} {{ b.sha256[:10] }}). Binary files cannot be line-diffed.</p>{% endif %}
+{% if lines %}<pre class="diff">{% for l in lines %}<span class="{{ 'add' if l.startswith('+') and not l.startswith('+++') else 'del' if l.startswith('-') and not l.startswith('---') else '' }}">{{ l }}</span>
+{% endfor %}</pre>{% elif not file_changed %}<p>No differences.</p>{% endif %}
+<a href="/reports/{{ r.id }}">Back</a>{% endblock %}

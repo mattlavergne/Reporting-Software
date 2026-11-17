@@ -1,0 +1,36 @@
+{% extends "base.html" %}{% block body %}
+<h1>{{ r.name }} <span class="tag">{{ r.kind }}</span></h1>
+<p>{{ r.description }} <small>{{ r.category }}</small></p>
+<section><h2>Run</h2>
+<form method="post" action="/reports/{{ r.id }}/run" class="row"><input type="hidden" name="csrf" value="{{ csrf }}">
+{% include "_params.html" %}
+<label>Format <select name="fmt">{% for f in (table_formats if r.kind=='sql' else formats) %}<option>{{ f }}</option>{% endfor %}</select></label><button>Run now</button></form></section>
+<section><h2>Recent runs</h2><table><tr><th>#</th><th>When</th><th>By</th><th>Ver</th><th>Status</th><th>Rows</th><th></th></tr>
+{% for x in runs %}<tr><td>{{ x.id }}</td><td>{{ x.started.strftime('%Y-%m-%d %H:%M') }}</td><td>{{ x.triggered_by }}</td><td>v{{ x.version_number }}</td><td class="{{ x.status }}">{{ x.status }}</td><td>{{ x.rows if x.rows is not none }}</td><td>{% if x.status=='ok' %}<a href="/runs/{{ x.id }}/download">download</a>{% else %}{{ x.message }}{% endif %}</td></tr>{% endfor %}</table></section>
+{% if user.role != 'viewer' %}
+<section><h2>Versions</h2>
+<table><tr><th>Ver</th><th>When</th><th>Author</th><th>Note</th><th>File</th></tr>
+{% for v in r.versions %}<tr><td>v{{ v.number }}</td><td>{{ v.created.strftime('%Y-%m-%d %H:%M') }}</td><td>{{ v.author }}</td><td>{{ v.note }}</td><td>{% if v.stored_path %}<a href="/reports/{{ r.id }}/versions/{{ v.number }}/file">{{ v.filename }}</a>{% endif %}</td></tr>{% endfor %}</table>
+{% if r.versions|length > 1 %}<form method="get" action="/reports/{{ r.id }}/diff" class="row">Compare <select name="a">{% for v in r.versions %}<option value="{{ v.number }}" {{ 'selected' if loop.index==2 }}>v{{ v.number }}</option>{% endfor %}</select> with <select name="b">{% for v in r.versions %}<option value="{{ v.number }}">v{{ v.number }}</option>{% endfor %}</select><button>Diff</button></form>{% endif %}
+<details><summary>Save a new version</summary>
+<form method="post" action="/reports/{{ r.id }}/versions" enctype="multipart/form-data" class="stack"><input type="hidden" name="csrf" value="{{ csrf }}">
+{% if r.kind != 'crystal' %}<label>{{ 'SQL' if r.kind=='sql' else 'SSRS path' }}<textarea name="source" rows="10" class="mono">{{ r.latest.source }}</textarea></label>{% else %}<label>New .rpt file (leave empty to keep current)<input type="file" name="file" accept=".rpt"></label>{% endif %}
+<label>Change note (required)<input name="note" required></label><button>Save version</button></form></details></section>
+<section><h2>Notes</h2>
+<form method="post" action="/reports/{{ r.id }}/notes" class="row"><input type="hidden" name="csrf" value="{{ csrf }}"><input name="text" placeholder="Add a note" required><button>Add</button></form>
+{% for n in r.notes %}<p><b>{{ n.author }}</b> <small>{{ n.created.strftime('%Y-%m-%d %H:%M') }}</small><br>{{ n.text }}</p>{% endfor %}</section>
+<section><h2>Scheduled jobs</h2>{% for j in jobs %}<p><a href="/jobs">{{ j.name }}</a> <code>{{ j.cron or 'manual' }}</code> {{ j.fmt }}</p>{% else %}<p>None. <a href="/jobs">Create one</a>.</p>{% endfor %}</section>
+<details><summary>Settings</summary>
+<form method="post" action="/reports/{{ r.id }}/settings" class="stack"><input type="hidden" name="csrf" value="{{ csrf }}">
+<label>Name<input name="name" value="{{ r.name }}"></label><label>Category<input name="category" value="{{ r.category }}"></label>
+<label>Description<textarea name="description">{{ r.description }}</textarea></label>
+<label>Parameters (name | label | default)<textarea name="params" rows="3">{% for p in r.params %}{{ p.name }} | {{ p.label }} | {{ p.default }}
+{% endfor %}</textarea></label>
+{% if r.kind=='sql' %}<label>Connection<select name="connection_id"><option value="">-</option>{% for c in conns %}<option value="{{ c.id }}" {{ 'selected' if c.id==r.connection_id }}>{{ c.name }}</option>{% endfor %}</select></label>{% endif %}
+<button>Save</button></form></details>
+{% endif %}
+{% if user.role == 'admin' %}<details><summary>Access (viewers allowed to run this report)</summary>
+<form method="post" action="/reports/{{ r.id }}/access" class="stack"><input type="hidden" name="csrf" value="{{ csrf }}">
+{% for v in viewers %}<label class="check"><input type="checkbox" name="users" value="{{ v.id }}" {{ 'checked' if v.id in granted }}> {{ v.username }}</label>{% else %}<p>No viewer accounts.</p>{% endfor %}<button>Save access</button></form>
+<form method="post" action="/reports/{{ r.id }}/delete" onsubmit="return confirm('Delete this report and all versions?')"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="danger">Delete report</button></form></details>{% endif %}
+{% endblock %}

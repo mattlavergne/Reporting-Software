@@ -1,0 +1,7 @@
+{% extends "base.html" %}{% block body %}
+<h1>Reports</h1>
+<form method="get" class="row"><input name="q" value="{{ q }}" placeholder="Search name / description">
+<select name="category"><option value="">All categories</option>{% for c in cats %}<option {{ 'selected' if c==category }}>{{ c }}</option>{% endfor %}</select><button>Filter</button></form>
+<table><tr><th>Name</th><th>Type</th><th>Category</th><th>Version</th><th>Description</th></tr>
+{% for r in reports %}<tr><td><a href="/reports/{{ r.id }}">{{ r.name }}</a></td><td><span class="tag">{{ r.kind }}</span></td><td>{{ r.category }}</td><td>v{{ r.latest.number if r.latest }}</td><td>{{ r.description|truncate(90) }}</td></tr>
+{% else %}<tr><td colspan="5">No reports{% if user.role == 'viewer' %} have been shared with you{% endif %}.</td></tr>{% endfor %}</table>{% endblock %}
